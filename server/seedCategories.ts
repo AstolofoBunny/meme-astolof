@@ -1,5 +1,5 @@
 import { db } from "./db.ts";
-import { categories } from "../shared/schema.";
+import { categories } from "../shared/schema.ts";
 
 async function seedCategories() {
   try {
