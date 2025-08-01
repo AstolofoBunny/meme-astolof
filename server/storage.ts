@@ -3,9 +3,9 @@ import { db } from "./db";
 import { eq, ilike, or, desc } from "drizzle-orm";
 
 export interface IStorage {
-  // User methods (existing)
+  // User methods
   getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
 
   // Category methods
@@ -42,8 +42,8 @@ export class DatabaseStorage implements IStorage {
     return user || undefined;
   }
 
-  async getUserByUsername(username: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.username, username));
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
     return user || undefined;
   }
 
@@ -111,15 +111,26 @@ export class DatabaseStorage implements IStorage {
   async createPost(insertPost: InsertPost): Promise<Post> {
     const [post] = await db
       .insert(posts)
-      .values(insertPost)
+      .values({
+        ...insertPost,
+        images: insertPost.images || [],
+        downloadFiles: insertPost.downloadFiles || []
+      })
       .returning();
     return post;
   }
 
   async updatePost(id: string, updates: Partial<InsertPost>): Promise<Post | undefined> {
+    // Handle arrays for images and downloadFiles 
+    const cleanUpdates = {
+      ...updates,
+      ...(updates.images && { images: updates.images }),
+      ...(updates.downloadFiles && { downloadFiles: updates.downloadFiles })
+    };
+    
     const [post] = await db
       .update(posts)
-      .set(updates)
+      .set(cleanUpdates)
       .where(eq(posts.id, id))
       .returning();
     return post || undefined;

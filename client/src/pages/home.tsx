@@ -201,10 +201,10 @@ export default function Home() {
             <div>
               <h4 className="font-medium text-slate-900 mb-3">Support</h4>
               <ul className="space-y-2 text-sm text-slate-600">
-                <li><a href="#" className="hover:text-slate-900">Help Center</a></li>
-                <li><a href="#" className="hover:text-slate-900">Contact Us</a></li>
-                <li><a href="#" className="hover:text-slate-900">License Info</a></li>
-                <li><a href="#" className="hover:text-slate-900">FAQ</a></li>
+                <li><Link href="/help-center"><span className="hover:text-slate-900 cursor-pointer">Help Center</span></Link></li>
+                <li><Link href="/contact"><span className="hover:text-slate-900 cursor-pointer">Contact Us</span></Link></li>
+                <li><Link href="/license"><span className="hover:text-slate-900 cursor-pointer">License Info</span></Link></li>
+                <li><Link href="/faq"><span className="hover:text-slate-900 cursor-pointer">FAQ</span></Link></li>
               </ul>
             </div>
             <div>

@@ -3,7 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Plus, Edit, Trash2, Eye, X, LogIn } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, X, LogIn, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,6 +18,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
+import { useUserRole } from "@/contexts/UserRoleContext";
 import { signInWithGoogle } from "@/lib/firebase";
 import Header from "@/components/header";
 import FileUpload from "@/components/file-upload";
@@ -27,7 +28,7 @@ const postFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   description: z.string().min(1, "Description is required"),
   categoryId: z.string().min(1, "Category is required"),
-  price: z.string().min(0, "Price must be 0 or greater"),
+  price: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 0, "Price must be 0 or greater"),
 });
 
 const newsFormSchema = z.object({
@@ -36,10 +37,17 @@ const newsFormSchema = z.object({
   excerpt: z.string().min(1, "Excerpt is required"),
 });
 
+const categoryFormSchema = z.object({
+  name: z.string().min(1, "Category name is required"),
+  slug: z.string().min(1, "Slug is required"),
+});
+
 export default function Admin() {
   const { user, loading } = useAuth();
+  const { userRole, isAdmin, loading: roleLoading } = useUserRole();
   const [isCreatePostOpen, setIsCreatePostOpen] = useState(false);
   const [isCreateNewsOpen, setIsCreateNewsOpen] = useState(false);
+  const [isCreateCategoryOpen, setIsCreateCategoryOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<Post | null>(null);
   const [editingNews, setEditingNews] = useState<NewsArticle | null>(null);
   const { toast } = useToast();
@@ -61,7 +69,7 @@ export default function Admin() {
   };
 
   // Show loading state
-  if (loading) {
+  if (loading || roleLoading) {
     return (
       <div className="min-h-screen bg-background">
         <Header />
@@ -99,6 +107,35 @@ export default function Admin() {
                   <LogIn className="mr-2 h-4 w-4" />
                   Sign In with Google
                 </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show access denied for non-admin users
+  if (!isAdmin) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Header />
+        <div className="container mx-auto px-4 py-8">
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Card className="w-full max-w-md">
+              <CardHeader className="text-center">
+                <CardTitle className="flex items-center justify-center gap-2">
+                  <Shield className="h-6 w-6 text-red-500" />
+                  Access Denied
+                </CardTitle>
+                <CardDescription>
+                  You need admin privileges to access this panel. Currently you have "{userRole}" role.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-muted-foreground text-center">
+                  Contact your administrator to request elevated permissions.
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -224,6 +261,28 @@ export default function Admin() {
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to delete news article", variant: "destructive" });
+    },
+  });
+
+  const createCategoryMutation = useMutation({
+    mutationFn: async (data: z.infer<typeof categoryFormSchema>) => {
+      const response = await fetch("/api/categories", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to create category");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      setIsCreateCategoryOpen(false);
+      toast({ title: "Success", description: "Category created successfully" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create category", variant: "destructive" });
     },
   });
 
@@ -467,6 +526,79 @@ export default function Admin() {
     );
   };
 
+  const CategoryForm = ({ onClose }: { onClose: () => void }) => {
+    const form = useForm<z.infer<typeof categoryFormSchema>>({
+      resolver: zodResolver(categoryFormSchema),
+      defaultValues: {
+        name: "",
+        slug: "",
+      },
+    });
+
+    const onSubmit = (values: z.infer<typeof categoryFormSchema>) => {
+      createCategoryMutation.mutate(values);
+    };
+
+    // Auto-generate slug from name
+    const handleNameChange = (name: string) => {
+      const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+      form.setValue('slug', slug);
+    };
+
+    return (
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Category Name</FormLabel>
+                <FormControl>
+                  <Input 
+                    placeholder="Enter category name..." 
+                    {...field}
+                    onChange={(e) => {
+                      field.onChange(e);
+                      handleNameChange(e.target.value);
+                    }}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="slug"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Slug</FormLabel>
+                <FormControl>
+                  <Input placeholder="category-slug" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <div className="flex gap-4 pt-4">
+            <Button
+              type="submit"
+              disabled={createCategoryMutation.isPending}
+            >
+              Create Category
+            </Button>
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </Form>
+    );
+  };
+
   return (
     <div className="min-h-screen bg-slate-50">
       <Header />
@@ -650,6 +782,20 @@ export default function Admin() {
             <TabsContent value="categories" className="space-y-6">
               <div className="flex justify-between items-center">
                 <h2 className="text-lg font-semibold text-slate-900">Manage Categories</h2>
+                <Dialog open={isCreateCategoryOpen} onOpenChange={setIsCreateCategoryOpen}>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Create Category
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Create New Category</DialogTitle>
+                    </DialogHeader>
+                    <CategoryForm onClose={() => setIsCreateCategoryOpen(false)} />
+                  </DialogContent>
+                </Dialog>
               </div>
 
               {categoriesLoading ? (

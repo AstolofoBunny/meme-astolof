@@ -2,7 +2,7 @@ import type { Express } from "express";
 import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { insertPostSchema, insertNewsArticleSchema, insertCategorySchema } from "@shared/schema";
+import { insertPostSchema, insertNewsArticleSchema, insertCategorySchema, insertUserSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
@@ -21,6 +21,19 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  
+  // Simple Firebase token verification middleware (for demo purposes)
+  const verifyFirebaseToken = async (req: any, res: any, next: any) => {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+    
+    // In a real app, you'd verify the Firebase token here
+    // For now, we'll just check if it exists and pass through
+    req.userEmail = "demo@example.com"; // This would come from the decoded token
+    next();
+  };
   
   // Serve uploaded files statically
   app.use("/uploads", (req, res, next) => {
@@ -284,6 +297,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(204).send();
     } catch (error) {
       res.status(500).json({ message: "Failed to delete article" });
+    }
+  });
+
+  // User management routes
+  app.get("/api/user/role", verifyFirebaseToken, async (req: any, res) => {
+    try {
+      const user = await storage.getUserByEmail(req.userEmail);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      res.json({ role: user.role });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user role" });
+    }
+  });
+
+  app.post("/api/user/create", verifyFirebaseToken, async (req: any, res) => {
+    try {
+      const validatedData = insertUserSchema.parse(req.body);
+      const user = await storage.createUser(validatedData);
+      res.status(201).json(user);
+    } catch (error) {
+      res.status(400).json({ message: "Invalid user data" });
     }
   });
 
