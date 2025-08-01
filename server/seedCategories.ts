@@ -1,8 +1,12 @@
+import { db } from "./db";
+import { categories } from "../shared/schema";
+
 async function seedCategories() {
   try {
     const existing = await db.select().from(categories);
+
     if (existing.length > 0) {
-      console.log("Categories already exist, skipping.");
+      console.log("Categories already exist, skipping");
       return;
     }
 
@@ -15,14 +19,10 @@ async function seedCategories() {
     ];
 
     await db.insert(categories).values(defaultCategories);
-    console.log("Categories added!");
+    console.log("Categories added");
   } catch (error) {
-    if (error instanceof Error) {
-      console.error(error.message);
-      console.error(error.stack);
-    } else {
-      console.error(error);
-    }
+    console.error("Error seeding categories:");
+    console.error(error);
   } finally {
     process.exit();
   }
