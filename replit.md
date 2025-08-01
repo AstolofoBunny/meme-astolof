@@ -10,6 +10,9 @@ Preferred communication style: Simple, everyday language.
 
 ## Recent Changes
 
+- January 30, 2025: Implemented role-based admin panel access - regular users can create posts/news, only admins see categories tab
+- January 30, 2025: Added email-based admin role assignment (petro228man@gmail.com configured as admin)
+- January 30, 2025: Created demo authentication system for local testing with predefined admin/regular user accounts
 - January 30, 2025: Fixed server startup issue with ESM imports and type validation errors
 - January 30, 2025: Implemented complete content management platform with posts, categories, news, and admin panel
 - January 30, 2025: Added file upload system with drag-and-drop support for images and downloadable files

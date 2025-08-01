@@ -31,7 +31,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     
     // In a real app, you'd verify the Firebase token here
     // For now, we'll just check if it exists and pass through
-    req.userEmail = "demo@example.com"; // This would come from the decoded token
+    const token = authHeader.replace('Bearer ', '');
+    if (token === 'demo-token') {
+      req.userEmail = "demo@example.com"; // This would come from the decoded token
+    } else {
+      req.userEmail = "demo@example.com"; // This would come from the decoded token
+    }
     next();
   };
   
@@ -316,6 +321,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/user/create", verifyFirebaseToken, async (req: any, res) => {
     try {
       const validatedData = insertUserSchema.parse(req.body);
+      
+      // Check if user should be admin based on email
+      const adminEmails = ['petro228man@gmail.com'];
+      if (adminEmails.includes(validatedData.email)) {
+        validatedData.role = 'admin';
+      }
+      
       const user = await storage.createUser(validatedData);
       res.status(201).json(user);
     } catch (error) {

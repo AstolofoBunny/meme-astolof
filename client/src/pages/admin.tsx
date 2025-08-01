@@ -127,34 +127,7 @@ export default function Admin() {
     );
   }
 
-  // Show access denied for non-admin users
-  if (!isAdmin) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Header />
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center min-h-[400px]">
-            <Card className="w-full max-w-md">
-              <CardHeader className="text-center">
-                <CardTitle className="flex items-center justify-center gap-2">
-                  <Shield className="h-6 w-6 text-red-500" />
-                  Access Denied
-                </CardTitle>
-                <CardDescription>
-                  You need admin privileges to access this panel. Currently you have "{userRole}" role.
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <p className="text-sm text-muted-foreground text-center">
-                  Contact your administrator to request elevated permissions.
-                </p>
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  // All signed-in users can access the content management panel
 
   const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -618,14 +591,24 @@ export default function Admin() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="bg-white rounded-xl shadow-sm border border-slate-200">
           <div className="flex justify-between items-center p-6 border-b border-slate-200">
-            <h1 className="text-2xl font-semibold text-slate-900">Admin Panel</h1>
+            <div>
+              <h1 className="text-2xl font-semibold text-slate-900">Content Management</h1>
+              <p className="text-sm text-slate-600 mt-1">
+                {isAdmin ? 'Full admin access - manage posts, news, and categories' : 'Create and manage your posts and news articles'}
+              </p>
+            </div>
+            {isAdmin && (
+              <div className="bg-blue-50 text-blue-700 text-xs font-medium px-2 py-1 rounded">
+                ADMIN
+              </div>
+            )}
           </div>
 
           <Tabs defaultValue="posts" className="p-6">
-            <TabsList className="grid w-full grid-cols-3">
+            <TabsList className={`grid w-full ${isAdmin ? 'grid-cols-3' : 'grid-cols-2'}`}>
               <TabsTrigger value="posts">Posts</TabsTrigger>
               <TabsTrigger value="news">News</TabsTrigger>
-              <TabsTrigger value="categories">Categories</TabsTrigger>
+              {isAdmin && <TabsTrigger value="categories">Categories</TabsTrigger>}
             </TabsList>
 
             <TabsContent value="posts" className="space-y-6">
@@ -791,42 +774,44 @@ export default function Admin() {
               )}
             </TabsContent>
 
-            <TabsContent value="categories" className="space-y-6">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold text-slate-900">Manage Categories</h2>
-                <Dialog open={isCreateCategoryOpen} onOpenChange={setIsCreateCategoryOpen}>
-                  <DialogTrigger asChild>
-                    <Button>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Create Category
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-md">
-                    <DialogHeader>
-                      <DialogTitle>Create New Category</DialogTitle>
-                    </DialogHeader>
-                    <CategoryForm onClose={() => setIsCreateCategoryOpen(false)} />
-                  </DialogContent>
-                </Dialog>
-              </div>
+            {isAdmin && (
+              <TabsContent value="categories" className="space-y-6">
+                <div className="flex justify-between items-center">
+                  <h2 className="text-lg font-semibold text-slate-900">Manage Categories</h2>
+                  <Dialog open={isCreateCategoryOpen} onOpenChange={setIsCreateCategoryOpen}>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Create Category
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Create New Category</DialogTitle>
+                      </DialogHeader>
+                      <CategoryForm onClose={() => setIsCreateCategoryOpen(false)} />
+                    </DialogContent>
+                  </Dialog>
+                </div>
 
-              {categoriesLoading ? (
-                <div className="space-y-4">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-16 w-full" />
-                  ))}
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {categories.map((category) => (
-                    <div key={category.id} className="bg-slate-50 p-4 rounded-lg">
-                      <h3 className="font-medium text-slate-900">{category.name}</h3>
-                      <p className="text-sm text-slate-600">Slug: {category.slug}</p>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </TabsContent>
+                {categoriesLoading ? (
+                  <div className="space-y-4">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Skeleton key={i} className="h-16 w-full" />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {categories.map((category) => (
+                      <div key={category.id} className="bg-slate-50 p-4 rounded-lg">
+                        <h3 className="font-medium text-slate-900">{category.name}</h3>
+                        <p className="text-sm text-slate-600">Slug: {category.slug}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </TabsContent>
+            )}
           </Tabs>
         </div>
       </main>

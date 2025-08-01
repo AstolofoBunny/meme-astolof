@@ -34,8 +34,10 @@ export const UserRoleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
-      // Handle demo users
-      if (user.email === 'admin@example.com') {
+      // Handle demo users and admin emails
+      const adminEmails = ['admin@example.com', 'petro228man@gmail.com'];
+      
+      if (adminEmails.includes(user.email || '')) {
         setUserRole('admin');
         setLoading(false);
         return;
