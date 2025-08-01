@@ -1,5 +1,5 @@
-import { db } from "./db.ts";
-import { categories } from "../shared/schema.ts";
+import { db } from "./db";
+import { categories } from "../shared/schema";
 
 async function seedCategories() {
   try {
@@ -21,8 +21,13 @@ async function seedCategories() {
     await db.insert(categories).values(defaultCategories);
     console.log("Categories added");
   } catch (error) {
-    console.error("Error seeding categories:");
-    console.error(error);
+    if (error instanceof Error) {
+      console.error("Error:", error.message);
+      console.error(error.stack);
+    } else {
+      console.error("Unknown error:", error);
+    }
+    process.exit(1);
   } finally {
     process.exit();
   }
