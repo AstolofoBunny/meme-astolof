@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { LogOut, User, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
-import { signInWithGoogle, logOut } from '@/lib/firebase';
+import { signInWithGoogle, logOut, isFirebaseConfigured } from '@/lib/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
 
@@ -19,6 +19,15 @@ export const AuthButton: React.FC = () => {
   const { toast } = useToast();
 
   const handleSignIn = async () => {
+    if (!isFirebaseConfigured) {
+      toast({
+        title: "Authentication not configured",
+        description: "Firebase authentication is not set up. Contact your administrator.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     try {
       await signInWithGoogle();
       toast({
@@ -56,8 +65,8 @@ export const AuthButton: React.FC = () => {
 
   if (!user) {
     return (
-      <Button onClick={handleSignIn} variant="outline">
-        Sign In
+      <Button onClick={handleSignIn} variant="outline" disabled={!isFirebaseConfigured}>
+        {isFirebaseConfigured ? "Sign In" : "Auth Disabled"}
       </Button>
     );
   }
