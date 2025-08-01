@@ -53,6 +53,19 @@ export default function Admin() {
   const [editingNews, setEditingNews] = useState<NewsArticle | null>(null);
   const { toast } = useToast();
 
+  // All queries must be called at the top level
+  const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
+  });
+
+  const { data: posts = [], isLoading: postsLoading } = useQuery<Post[]>({
+    queryKey: ["/api/posts"],
+  });
+
+  const { data: news = [], isLoading: newsLoading } = useQuery<NewsArticle[]>({
+    queryKey: ["/api/news"],
+  });
+
   const handleSignIn = async () => {
     try {
       await signInWithGoogle();
@@ -128,18 +141,6 @@ export default function Admin() {
   }
 
   // All signed-in users can access the content management panel
-
-  const { data: categories = [], isLoading: categoriesLoading } = useQuery<Category[]>({
-    queryKey: ["/api/categories"],
-  });
-
-  const { data: posts = [], isLoading: postsLoading } = useQuery<Post[]>({
-    queryKey: ["/api/posts"],
-  });
-
-  const { data: news = [], isLoading: newsLoading } = useQuery<NewsArticle[]>({
-    queryKey: ["/api/news"],
-  });
 
   const createPostMutation = useMutation({
     mutationFn: async (formData: FormData) => {
