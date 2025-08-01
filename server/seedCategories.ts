@@ -1,5 +1,5 @@
 import { db } from "./db";
-import { categories } from "@shared/schema";
+import { categories } from "../shared/schema";
 
 async function seedCategories() {
   const existing = await db.select().from(categories);
