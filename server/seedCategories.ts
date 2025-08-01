@@ -15,6 +15,6 @@ async function main() {
 }
 
 main().catch((err) => {
-  console.error(err.stack || err);
+  console.error(JSON.stringify(err, null, 2));
   process.exit(1);
 });
