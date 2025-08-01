@@ -1,20 +1,31 @@
-import { prisma } from './db';
-import { categories } from '../shared/constants';
+async function seedCategories() {
+  try {
+    const existing = await db.select().from(categories);
+    if (existing.length > 0) {
+      console.log("Categories already exist, skipping.");
+      return;
+    }
 
-async function main() {
-  const existing = await prisma.category.findFirst();
-  if (existing) {
-    return;
+    const defaultCategories = [
+      { id: "warcraft-3", name: "Warcraft 3", slug: "warcraft-3" },
+      { id: "minecraft", name: "Minecraft", slug: "minecraft" },
+      { id: "books", name: "Books", slug: "books" },
+      { id: "3d", name: "3D", slug: "3d" },
+      { id: "other", name: "Other", slug: "other" },
+    ];
+
+    await db.insert(categories).values(defaultCategories);
+    console.log("Categories added!");
+  } catch (error) {
+    if (error instanceof Error) {
+      console.error(error.message);
+      console.error(error.stack);
+    } else {
+      console.error(error);
+    }
+  } finally {
+    process.exit();
   }
-
-  await prisma.category.createMany({
-    data: categories.map((name) => ({ name })),
-  });
-
-  console.log('Seeded categories.');
 }
 
-main().catch((err) => {
-  console.error(JSON.stringify(err, null, 2));
-  process.exit(1);
-});
+seedCategories();
