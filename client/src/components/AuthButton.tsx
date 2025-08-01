@@ -11,6 +11,7 @@ import {
 import { LogOut, User, Settings } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { signInWithGoogle, logOut, isFirebaseConfigured } from '@/lib/firebase';
+import { signInAsDemo, signOutDemo } from '@/contexts/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'wouter';
 
@@ -45,6 +46,12 @@ export const AuthButton: React.FC = () => {
 
   const handleSignOut = async () => {
     try {
+      // Check if this is a demo user
+      if (user?.email?.includes('@example.com')) {
+        signOutDemo();
+        return;
+      }
+      
       await logOut();
       toast({
         title: "Signed out",
@@ -65,9 +72,26 @@ export const AuthButton: React.FC = () => {
 
   if (!user) {
     return (
-      <Button onClick={handleSignIn} variant="outline" disabled={!isFirebaseConfigured}>
-        {isFirebaseConfigured ? "Sign In" : "Auth Disabled"}
-      </Button>
+      <div className="flex gap-2">
+        <Button onClick={handleSignIn} variant="outline" disabled={!isFirebaseConfigured}>
+          {isFirebaseConfigured ? "Sign In" : "Auth Disabled"}
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" size="sm">
+              Demo
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuItem onClick={() => signInAsDemo('admin')}>
+              Demo Admin
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => signInAsDemo('user')}>
+              Demo User
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     );
   }
 

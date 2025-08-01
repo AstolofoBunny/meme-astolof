@@ -34,6 +34,17 @@ export const UserRoleProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         return;
       }
 
+      // Handle demo users
+      if (user.email === 'admin@example.com') {
+        setUserRole('admin');
+        setLoading(false);
+        return;
+      } else if (user.email === 'user@example.com') {
+        setUserRole('user');
+        setLoading(false);
+        return;
+      }
+
       try {
         const response = await fetch('/api/user/role', {
           headers: {

@@ -20,6 +20,7 @@ import { queryClient } from "@/lib/queryClient";
 import { useAuth } from "@/contexts/AuthContext";
 import { useUserRole } from "@/contexts/UserRoleContext";
 import { signInWithGoogle } from "@/lib/firebase";
+import { signInAsDemo } from "@/contexts/AuthContext";
 import Header from "@/components/header";
 import FileUpload from "@/components/file-upload";
 import type { Post, Category, NewsArticle } from "@shared/schema";
@@ -102,11 +103,22 @@ export default function Admin() {
                   You need to be signed in to access the admin panel and create posts.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
                 <Button onClick={handleSignIn} className="w-full">
                   <LogIn className="mr-2 h-4 w-4" />
                   Sign In with Google
                 </Button>
+                <div className="text-center text-sm text-muted-foreground">
+                  For testing purposes:
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button onClick={() => signInAsDemo('admin')} variant="outline" size="sm">
+                    Demo Admin
+                  </Button>
+                  <Button onClick={() => signInAsDemo('user')} variant="outline" size="sm">
+                    Demo User
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>
